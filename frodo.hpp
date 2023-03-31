@@ -24,7 +24,7 @@ namespace Frodo {
 	template<class Head, class... Tail>
       auto Runner(Head head, Tail... tail) {
          return [head, tail...] (auto&&... args) {
-            VecRunner<decltype(args)...> funcs{head};
+				std::vector<void(decltype(args)...)> funcs{head};
             (funcs.push_back(tail),...);
             for (auto func : funcs) {
                func(std::forward<decltype(args)>(args)...);
@@ -70,14 +70,17 @@ namespace Frodo {
 		template<class Head, class... Tail>
          auto Checker(Head head, Tail... tail) {
             return [head, tail...] (auto&&... args) {
-               VecCheckers<decltype(args)...> funcs{head};
+					using ret_t = decltype(head(std::forward<decltype(args)>(args)...));
+					std::vector<std::function<ret_t(decltype(args)...)>> funcs{head};
                (funcs.push_back(tail),...);
-               for (auto func : funcs) {
-                  if (!func(std::forward<decltype(args)>(args)...)) {
-                     return false;
-                  }
-               }
-               return true;
+					ret_t ret{};
+					for (auto func : funcs) {
+						ret = func(std::forward<decltype(args)>(args)...);
+						if (ret.index() == 0) {
+							return ret;
+						}
+					}
+					return ret;
             };
          }
    }
